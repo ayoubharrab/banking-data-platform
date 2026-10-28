@@ -1,0 +1,12 @@
+# Python
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+
+# Data (not versioned, see README for download)
+data/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
