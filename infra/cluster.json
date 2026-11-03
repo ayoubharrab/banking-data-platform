@@ -1,0 +1,22 @@
+{
+  "cluster_name": "cl-banking-ayoub",
+  "spark_version": "18.x-scala2.13",
+  "node_type_id": "Standard_D4ds_v4",
+  "driver_node_type_id": "Standard_D4ds_v4",
+  "num_workers": 0,
+  "spark_conf": {
+    "spark.master": "local[*, 4]",
+    "spark.databricks.cluster.profile": "singleNode"
+  },
+  "custom_tags": {
+    "ResourceClass": "SingleNode",
+    "project": "banking-data-platform"
+  },
+  "azure_attributes": {
+    "availability": "ON_DEMAND_AZURE"
+  },
+  "autotermination_minutes": 20,
+  "data_security_mode": "SINGLE_USER",
+  "single_user_name": "ayoub.harrab@ecoles-epsi.net",
+  "runtime_engine": "STANDARD"
+}
