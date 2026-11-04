@@ -1,0 +1,15 @@
+{
+	"name": "adf-banking-ayoub",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "germanywestcentral",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "723ee091-538e-452e-a718-0037888d964d",
+		"tenantId": "b6e77e52-65f6-4dec-b7d9-8e45f36a536f"
+	}
+}

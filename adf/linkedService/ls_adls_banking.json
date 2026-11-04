@@ -1,0 +1,11 @@
+{
+	"name": "ls_adls_banking",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://stbankingayoub.dfs.core.windows.net/"
+		}
+	}
+}
