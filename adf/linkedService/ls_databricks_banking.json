@@ -1,0 +1,13 @@
+{
+	"name": "ls_databricks_banking",
+	"properties": {
+		"annotations": [],
+		"type": "AzureDatabricks",
+		"typeProperties": {
+			"domain": "https://adb-7405610799423372.12.azuredatabricks.net",
+			"authentication": "MSI",
+			"workspaceResourceId": "/subscriptions/fdde0f2c-a206-44e6-8cca-533daed9c4fa/resourceGroups/rg-banking-data-platform/providers/Microsoft.Databricks/workspaces/dbw-banking-ayoub-se",
+			"existingClusterId": "1103-161941-7s65inl2"
+		}
+	}
+}
