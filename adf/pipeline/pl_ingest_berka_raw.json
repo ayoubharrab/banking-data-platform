@@ -54,6 +54,33 @@
 						}
 					}
 				]
+			},
+			{
+				"name": "run_medallion_job",
+				"type": "DatabricksJob",
+				"dependsOn": [
+					{
+						"activity": "copy_landing_to_raw",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"jobId": "1040568884312418"
+				},
+				"linkedServiceName": {
+					"referenceName": "ls_databricks_banking",
+					"type": "LinkedServiceReference"
+				}
 			}
 		],
 		"annotations": [],
