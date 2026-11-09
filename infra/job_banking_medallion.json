@@ -1,0 +1,95 @@
+﻿{
+  "created_time": 1794232254258,
+  "creator_user_name": "ayoub.harrab@ecoles-epsi.net",
+  "job_id": 1040568884312418,
+  "run_as_user_name": "ayoub.harrab@ecoles-epsi.net",
+  "settings": {
+    "email_notifications": {
+      "no_alert_for_skipped_runs": false,
+      "on_failure": [
+        "ayoub.harrab@ecoles-epsi.net"
+      ]
+    },
+    "format": "MULTI_TASK",
+    "max_concurrent_runs": 1,
+    "name": "job_banking_medallion",
+    "notification_settings": {
+      "no_alert_for_canceled_runs": false,
+      "no_alert_for_skipped_runs": false
+    },
+    "queue": {
+      "enabled": true
+    },
+    "tasks": [
+      {
+        "disabled": false,
+        "email_notifications": {},
+        "existing_cluster_id": "1103-161941-7s65inl2",
+        "notebook_task": {
+          "notebook_path": "/Workspace/Users/ayoub.harrab@ecoles-epsi.net/banking-data-platform/01_bronze_autoloader",
+          "source": "WORKSPACE"
+        },
+        "run_if": "ALL_SUCCESS",
+        "task_key": "bronze",
+        "timeout_seconds": 0,
+        "webhook_notifications": {}
+      },
+      {
+        "depends_on": [
+          {
+            "task_key": "bronze"
+          }
+        ],
+        "disabled": false,
+        "email_notifications": {},
+        "existing_cluster_id": "1103-161941-7s65inl2",
+        "notebook_task": {
+          "notebook_path": "/Workspace/Users/ayoub.harrab@ecoles-epsi.net/banking-data-platform/02_silver",
+          "source": "WORKSPACE"
+        },
+        "run_if": "ALL_SUCCESS",
+        "task_key": "silver",
+        "timeout_seconds": 0,
+        "webhook_notifications": {}
+      },
+      {
+        "depends_on": [
+          {
+            "task_key": "silver"
+          }
+        ],
+        "disabled": false,
+        "email_notifications": {},
+        "existing_cluster_id": "1103-161941-7s65inl2",
+        "notebook_task": {
+          "notebook_path": "/Workspace/Users/ayoub.harrab@ecoles-epsi.net/banking-data-platform/03_gold",
+          "source": "WORKSPACE"
+        },
+        "run_if": "ALL_SUCCESS",
+        "task_key": "gold",
+        "timeout_seconds": 0,
+        "webhook_notifications": {}
+      },
+      {
+        "depends_on": [
+          {
+            "task_key": "gold"
+          }
+        ],
+        "disabled": false,
+        "email_notifications": {},
+        "existing_cluster_id": "1103-161941-7s65inl2",
+        "notebook_task": {
+          "notebook_path": "/Workspace/Users/ayoub.harrab@ecoles-epsi.net/banking-data-platform/04_gold_aggregates",
+          "source": "WORKSPACE"
+        },
+        "run_if": "ALL_SUCCESS",
+        "task_key": "gold_aggregates",
+        "timeout_seconds": 0,
+        "webhook_notifications": {}
+      }
+    ],
+    "timeout_seconds": 0,
+    "webhook_notifications": {}
+  }
+}
