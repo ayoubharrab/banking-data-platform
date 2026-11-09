@@ -1,12 +1,33 @@
 # Databricks notebook source
 from pyspark.sql import functions as F
+from delta.tables import DeltaTable
 
 def yymmdd_to_date(col_name: str):
     return F.to_date(F.concat(F.lit("19"), F.substring(F.col(col_name), 1, 6)), "yyyyMMdd")
 
-def save_silver(df, table: str):
-    df.write.mode("overwrite").option("overwriteSchema", "true").saveAsTable(f"banking.silver.`{table}`")
-    print(f"silver.{table}: {spark.table(f'banking.silver.`{table}`').count():,} rows")
+def save_silver(df, table: str, key: str):
+    """Upsert into Silver: insert new rows, update changed rows, skip identical rows."""
+    full = f"banking.silver.`{table}`"
+    src = (df.dropDuplicates([key])                     
+             .withColumn("_updated_ts", F.current_timestamp()))
+
+    if not spark.catalog.tableExists(full):              
+        src.write.saveAsTable(full)
+        print(f"silver.{table}: created, {spark.table(full).count():,} rows")
+        return
+
+    cols = [c for c in df.columns if c != key]
+    changed = " OR ".join(f"NOT (t.`{c}` <=> s.`{c}`)" for c in cols)   
+
+    (DeltaTable.forName(spark, full).alias("t")
+        .merge(src.alias("s"), f"t.`{key}` = s.`{key}`")
+        .whenMatchedUpdateAll(condition=changed)          
+        .whenNotMatchedInsertAll()
+        .execute())
+
+    m = spark.sql(f"DESCRIBE HISTORY {full} LIMIT 1").first()["operationMetrics"]
+    print(f"silver.{table}: inserted={m.get('numTargetRowsInserted')} "
+          f"updated={m.get('numTargetRowsUpdated')} total={spark.table(full).count():,}")
 
 # COMMAND ----------
 
@@ -25,7 +46,8 @@ district = bronze.select([
     F.expr(f"try_cast(`{src}` AS {t})").alias(n)   
     for src, n, t in zip(src_cols, names, types)
 ])
-save_silver(district, "district")
+save_silver(district, "district", "district_id")
+
 
 # COMMAND ----------
 
@@ -39,7 +61,8 @@ account = (spark.table("banking.bronze.account")
                    F.col("district_id").cast("int"),
                    freq_expr[F.col("frequency")].alias("frequency"),
                    yymmdd_to_date("date").alias("open_date")))
-save_silver(account, "account")
+save_silver(account,  "account",  "account_id")
+
 
 # COMMAND ----------
 
@@ -66,20 +89,21 @@ client = c.select(
     F.to_date(F.concat(F.lit("19"), F.substring("birth_number", 1, 2),
                        F.lpad(F.when(mm > 50, mm - 50).otherwise(mm).cast("string"), 2, "0"),
                        F.substring("birth_number", 5, 2)), "yyyyMMdd").alias("birth_date"))
-save_silver(client, "client")
+save_silver(client,   "client",   "client_id")
+
 
 # COMMAND ----------
 
 disp = (spark.table("banking.bronze.disp")
         .select(F.col("disp_id").cast("int"), F.col("client_id").cast("int"),
                 F.col("account_id").cast("int"), F.lower("type").alias("disp_type")))
-save_silver(disp, "disp")
+save_silver(disp, "disp", "disp_id")
 
 card = (spark.table("banking.bronze.card")
         .select(F.col("card_id").cast("int"), F.col("disp_id").cast("int"),
                 F.col("type").alias("card_type"),
-                yymmdd_to_date("issued").alias("issued_date")))   
-save_silver(card, "card")
+                yymmdd_to_date("issued").alias("issued_date")))   # "931107 00:00:00" -> first 6 chars
+save_silver(card, "card", "card_id")
 
 # COMMAND ----------
 
@@ -96,7 +120,8 @@ loan = (spark.table("banking.bronze.loan")
                 F.col("status"),
                 status_expr[F.col("status")].alias("status_label"),
                 F.col("status").isin("B", "D").alias("is_default")))
-save_silver(loan, "loan")
+save_silver(loan,     "loan",     "loan_id")
+
 
 # COMMAND ----------
 
@@ -118,7 +143,8 @@ order = (spark.table("banking.bronze.`order`")
                  F.col("bank_to"), F.col("account_to").cast("bigint"),
                  F.col("amount").cast("decimal(12,2)"),
                  F.coalesce(order_ks[F.trim("k_symbol")], F.lit("unknown")).alias("purpose")))
-save_silver(order, "order")
+save_silver(order,    "order",    "order_id")
+
 
 # COMMAND ----------
 
@@ -148,7 +174,7 @@ trans = t.select(
     F.coalesce(ks_map[F.trim("k_symbol")], F.lit("unknown")).alias("purpose"),  
     F.nullif(F.trim("bank"), F.lit("")).alias("partner_bank"),
     F.expr("try_cast(try_cast(account AS DOUBLE) AS BIGINT)").alias("partner_account"))  
-save_silver(trans, "trans")
+save_silver(trans,    "trans",    "trans_id")
 
 # COMMAND ----------
 
@@ -164,3 +190,60 @@ display(spark.sql("""
          MIN(trans_date), MAX(trans_date)
   FROM banking.silver.trans
 """))
+
+# COMMAND ----------
+
+S = "banking.silver"
+
+DQ_RULES = []
+
+pks = {"district": "district_id", "account": "account_id", "client": "client_id", "disp": "disp_id",
+       "card": "card_id", "loan": "loan_id", "order": "order_id", "trans": "trans_id"}
+for t, k in pks.items():
+    DQ_RULES.append((f"pk_unique_{t}",
+        f"SELECT COUNT(*) - COUNT(DISTINCT {k}) + COUNT_IF({k} IS NULL) FROM {S}.`{t}`", "error"))
+
+fks = [("account", "district_id", "district", "district_id"),
+       ("client",  "district_id", "district", "district_id"),
+       ("disp",    "client_id",   "client",   "client_id"),
+       ("disp",    "account_id",  "account",  "account_id"),
+       ("card",    "disp_id",     "disp",     "disp_id"),
+       ("loan",    "account_id",  "account",  "account_id"),
+       ("order",   "account_id",  "account",  "account_id"),
+       ("trans",   "account_id",  "account",  "account_id")]
+for c, ck, p, pk in fks:
+    DQ_RULES.append((f"fk_{c}_{ck}",
+        f"SELECT COUNT(*) FROM {S}.`{c}` c LEFT ANTI JOIN {S}.`{p}` p ON c.{ck} = p.{pk}", "error"))
+
+DQ_RULES += [
+    ("notnull_trans", f"SELECT COUNT_IF(trans_date IS NULL OR trans_type IS NULL OR amount IS NULL) FROM {S}.trans", "error"),
+    ("notnull_loan",  f"SELECT COUNT_IF(loan_date IS NULL OR status_label IS NULL) FROM {S}.loan", "error"),
+    ("notnull_client",f"SELECT COUNT_IF(birth_date IS NULL OR gender IS NULL) FROM {S}.client", "error"),
+    ("one_owner_per_account",
+        f"SELECT COUNT(*) FROM (SELECT account_id FROM {S}.disp WHERE disp_type = 'owner' GROUP BY 1 HAVING COUNT(*) <> 1)", "error"),
+    ("warn_negative_balance", f"SELECT COUNT_IF(balance < 0) FROM {S}.trans", "warn"),
+    ("warn_zero_amount",      f"SELECT COUNT_IF(amount = 0) FROM {S}.trans", "warn"),
+    ("warn_district_missing_stats", f"SELECT COUNT_IF(unemployment_95 IS NULL OR crimes_95 IS NULL) FROM {S}.district", "warn"),
+    ("warn_order_unknown_purpose",  f"SELECT COUNT_IF(purpose = 'unknown') FROM {S}.`order`", "warn"),
+]
+print(f"{len(DQ_RULES)} rules defined")
+
+# COMMAND ----------
+
+from datetime import datetime, timezone
+
+run_ts = datetime.now(timezone.utc)
+results = []
+for name, sql, severity in DQ_RULES:
+    bad = spark.sql(sql).first()[0]
+    status = "PASS" if bad == 0 else ("FAIL" if severity == "error" else "WARN")
+    results.append((run_ts, name, severity, int(bad), status))
+
+res_df = spark.createDataFrame(results, "run_ts timestamp, rule string, severity string, bad_rows long, status string")
+res_df.write.mode("append").saveAsTable(f"{S}._dq_results")      
+display(res_df.orderBy("status", "rule"))
+
+failed = [r[1] for r in results if r[4] == "FAIL"]
+if failed:
+    raise Exception(f"Data quality check failed: {failed}")      
+print("All blocking checks passed")
