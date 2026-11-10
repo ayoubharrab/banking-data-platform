@@ -257,4 +257,4 @@ The project ran on an Azure for Students subscription. Clusters stop after 20 id
 
 Ayoub Harrab, Data Engineer and Data Analyst
 
-[LinkedIn](https://www.linkedin.com/in/<your-profile>) · [Portfolio](<your-portfolio-url>)
+[LinkedIn](https://www.linkedin.com/in/ayoub-harrab/) · [Portfolio](https://ayoubharrab.github.io)
