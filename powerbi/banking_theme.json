@@ -1,0 +1,58 @@
+{
+  "name": "Banking Data Platform",
+  "dataColors": ["#2A78D6", "#EB6834", "#1BAF7A", "#EDA100", "#E87BA4", "#008300", "#6250D6", "#E34948"],
+  "background": "#FFFFFF",
+  "foreground": "#1F2937",
+  "tableAccent": "#2A78D6",
+  "good": "#0CA30C",
+  "neutral": "#EDA100",
+  "bad": "#D03B3B",
+  "minimum": "#CDE2FB",
+  "center": "#5598E7",
+  "maximum": "#104281",
+  "textClasses": {
+    "callout": { "fontSize": 24, "fontFace": "Segoe UI Semibold", "color": "#0D366B" },
+    "title":   { "fontSize": 12, "fontFace": "Segoe UI Semibold", "color": "#1F2937" },
+    "header":  { "fontSize": 11, "fontFace": "Segoe UI Semibold", "color": "#1F2937" },
+    "label":   { "fontSize": 10, "fontFace": "Segoe UI", "color": "#52514E" }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [{ "show": false }],
+        "border": [{ "show": false }],
+        "dropShadow": [{ "show": false }],
+        "title": [{ "show": true, "fontColor": { "solid": { "color": "#1F2937" } }, "fontSize": 12, "fontFamily": "Segoe UI Semibold", "alignment": "left" }],
+        "valueAxis": [{ "gridlineShow": true, "gridlineColor": { "solid": { "color": "#E8EBF0" } }, "gridlineStyle": "dotted", "labelColor": { "solid": { "color": "#6B7280" } }, "fontSize": 9 }],
+        "categoryAxis": [{ "gridlineShow": false, "labelColor": { "solid": { "color": "#6B7280" } }, "fontSize": 9 }],
+        "legend": [{ "show": true, "position": "TopRight", "labelColor": { "solid": { "color": "#52514E" } }, "fontSize": 9 }]
+      }
+    },
+    "card": {
+      "*": {
+        "labels": [{ "color": { "solid": { "color": "#0D366B" } }, "fontSize": 24, "fontFamily": "Segoe UI Semibold" }],
+        "categoryLabels": [{ "show": true, "color": { "solid": { "color": "#6B7280" } }, "fontSize": 10 }],
+        "title": [{ "show": false }]
+      }
+    },
+    "slicer": {
+      "*": {
+        "header": [{ "show": true, "fontColor": { "solid": { "color": "#6B7280" } }, "textSize": 9 }],
+        "items": [{ "fontColor": { "solid": { "color": "#1F2937" } }, "textSize": 10 }],
+        "title": [{ "show": false }]
+      }
+    },
+    "tableEx": {
+      "*": {
+        "grid": [{ "gridVertical": false, "gridHorizontal": true, "gridHorizontalColor": { "solid": { "color": "#EEF1F5" } }, "rowPadding": 4 }],
+        "columnHeaders": [{ "fontColor": { "solid": { "color": "#0D366B" } }, "backColor": { "solid": { "color": "#F3F6FB" } }, "fontFamily": "Segoe UI Semibold", "fontSize": 10 }],
+        "values": [{ "fontColor": { "solid": { "color": "#1F2937" } }, "fontSize": 10 }]
+      }
+    },
+    "page": {
+      "*": {
+        "background": [{ "color": { "solid": { "color": "#F4F6FA" } }, "transparency": 0 }]
+      }
+    }
+  }
+}
